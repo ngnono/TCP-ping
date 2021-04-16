@@ -1,5 +1,22 @@
 var net = require('net');
 
+String.prototype.toBytes = function(encoding){
+    var bytes = [];
+    var buff = new Buffer(this, encoding);
+    for(var i= 0; i< buff.length; i++){
+      var byteint = buff[i];
+      bytes.push(byteint);
+    }
+    return bytes;
+}
+
+
+var bytes = Buffer.alloc(1024);
+str = Buffer.from(bytes).toString('utf8');
+
+console.log(str + ": " + str.length + " characters, " +
+Buffer.byteLength(str, 'utf8') + " Bytes");//1Byte = 8 bit, 1k = 1024 Byte
+
 var ping = function(o, callback, sorttag) {
     var optionsArry = [];
     if (Object.prototype.toString.call(o) === '[object Array]') {
@@ -17,7 +34,7 @@ var ping = function(o, callback, sorttag) {
         var results = [];
         options.address = item.address || 'localhost';
         options.port = item.port || 80;
-        options.attempts = item.attempts || 10;
+        options.attempts = item.attempts || 100;
         options.timeout = item.timeout || 5000;
         connect(options);
 
@@ -58,8 +75,12 @@ var ping = function(o, callback, sorttag) {
         };
 
         function connect(options) {
+
+
+
             var s = new net.Socket();
             var start = process.hrtime();
+            
             s.connect(options.port, options.address, function() {
                 var time_arr = process.hrtime(start);
                 var time = (time_arr[0] * 1e9 + time_arr[1]) / 1e6;
@@ -67,11 +88,13 @@ var ping = function(o, callback, sorttag) {
                     seq: i,
                     time: time
                 });
+                s.write(str,'utf-8');
                 s.destroy();
                 i++;
                 check(options);
             });
             s.on('error', function(e) {
+                console.error(e);
                 results.push({
                     seq: i,
                     time: undefined,
