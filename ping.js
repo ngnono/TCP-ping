@@ -8,7 +8,7 @@ String.prototype.toBytes = function(encoding){
       bytes.push(byteint);
     }
     return bytes;
-}
+};
 
 
 var bytes = Buffer.alloc(1024);
@@ -28,14 +28,27 @@ var ping = function(o, callback, sorttag) {
     }
     var optionSize = optionsArry.length;
     var outArry = [];
+    var data = '';
     optionsArry.forEach(function(item) {
         var options = {};
         var i = 0;
         var results = [];
         options.address = item.address || 'localhost';
         options.port = item.port || 80;
-        options.attempts = item.attempts || 100;
+        options.attempts = item.attempts || 5;
         options.timeout = item.timeout || 5000;
+        options.size = item.size || 32;// 32Byte
+        options.content = item.content || null;
+
+        if(options.content){
+            var bytes = options.content.toBytes('utf8');
+            data = Buffer.from(bytes).toString('utf8');
+            options.size = Buffer.byteLength(data, 'utf8');
+        }else{
+            var bytes = Buffer.alloc(options.size);
+            data = Buffer.from(bytes).toString('utf8');
+        }
+
         connect(options);
 
         function check(options) {
@@ -56,11 +69,16 @@ var ping = function(o, callback, sorttag) {
                     address: options.address,
                     port: options.port,
                     attempts: options.attempts,
+                    size: options.size + ' Bytes',
                     avg: avg,
                     max: max,
                     min: min,
                     results: results
                 };
+                if(options.content){
+                    out.content = options.content;
+                }
+
                 outArry.push(out);
                 if (outArry.length === optionSize) {
                     if (sorttag !== undefined) {
@@ -75,12 +93,9 @@ var ping = function(o, callback, sorttag) {
         };
 
         function connect(options) {
-
-
-
             var s = new net.Socket();
             var start = process.hrtime();
-            
+
             s.connect(options.port, options.address, function() {
                 var time_arr = process.hrtime(start);
                 var time = (time_arr[0] * 1e9 + time_arr[1]) / 1e6;
@@ -88,7 +103,7 @@ var ping = function(o, callback, sorttag) {
                     seq: i,
                     time: time
                 });
-                s.write(str,'utf-8');
+                s.write(data,'utf-8');
                 s.destroy();
                 i++;
                 check(options);
