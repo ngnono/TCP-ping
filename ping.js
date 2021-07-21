@@ -2,7 +2,7 @@ var net = require('net');
 
 String.prototype.toBytes = function(encoding){
     var bytes = [];
-    var buff = new Buffer(this, encoding);
+    var buff = Buffer.from(this, encoding);
     for(var i= 0; i< buff.length; i++){
       var byteint = buff[i];
       bytes.push(byteint);
